@@ -10,7 +10,7 @@
 #include <stdlib.h>
 using namespace std;
 
-namespace SSR
+namespace AHXBXA
 {
     const double pi = acos(-1);
     const double eps = 0.01;
@@ -356,6 +356,6 @@ namespace SSR
 }
 int main()
 {
-    SSR::main();
+    AHXBXA::main();
     return 0;
 }
