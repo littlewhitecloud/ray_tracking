@@ -10,7 +10,7 @@
 #include <stdlib.h>
 using namespace std;
 
-namespace AHXBXA
+namespace SSR
 {
     const double pi = acos(-1);
     const double eps = 0.01;
@@ -85,10 +85,10 @@ namespace AHXBXA
     struct Camera
     {
         double ang = pi / 3; // 半视角
-        double f = 10;        // 焦距
+        double f = 10;       // 焦距
         double m = f * tan(ang);
 
-        double sight = 50; // 视距
+        double sight = 500; // 视距
         double step = 0.1;
         double ang_step = pi / 45;
 
@@ -108,10 +108,11 @@ namespace AHXBXA
             if (theta < 0)
                 theta += 2 * pi;
             m = f * tan(ang);
+            ang_step=(pi/45)*(ang/(pi/3));
             direct = vec(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi));
             e_x = vec(direct.y, -direct.x, 0);
             e_y = vec(-direct.x * direct.z, -direct.y * direct.z, 1 - direct.z * direct.z);
-            e_x = e_x.Unit(); 
+            e_x = e_x.Unit();
             e_y = e_y.Unit();
         }
     };
@@ -141,9 +142,7 @@ namespace AHXBXA
             }
             SetConsoleCursorPosition(hOutput, coord);
             printf("\n%s", A.c_str());
-            printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang);
-            printf("e_x: x:%.2f y:%.2f z:%.2f |e_x|:%.2f\n", cam.e_x.x, cam.e_x.y, cam.e_x.z, cam.e_x.Length());
-            printf("e_y: x:%.2f y:%.2f z:%.2f |e_y|:%.2f\n", cam.e_y.x, cam.e_y.y, cam.e_y.z, cam.e_y.Length());
+            printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang*180/pi);
         }
         void Color(double light, int i, int j)
         {
@@ -159,9 +158,9 @@ namespace AHXBXA
                 pix[i][j] = color[4];
             else if (light >= 70)
                 pix[i][j] = color[5];
-            else if (light >= 20)
+            else if (light >= 30)
                 pix[i][j] = color[6];
-            else if (light > eps)
+            else if (light >= 10)
                 pix[i][j] = color[7];
             else
                 pix[i][j] = color[8];
@@ -215,7 +214,7 @@ namespace AHXBXA
                     if (lamda < 0 || lamda > t)
                     {
                         tot_lamda += t;
-                        if ((((int)o.x / 3) % 2) ^ (((int)o.y / 3) % 2))
+                        if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
                             light += ground_light / cbrt(tot_lamda * tot_lamda);
                         S.Color(light, i + 50, j + 50);
                         continue;
@@ -300,15 +299,15 @@ namespace AHXBXA
             case 75:
                 cam.theta += cam.ang_step;
                 break;
-            //视角
+            // 视角
             case ',':
-                if(cam.ang<pi/2-eps)
-                cam.ang+=cam.ang_step*0.1;
+                if (cam.ang < pi / 2 - eps)
+                    cam.ang += cam.ang_step * 0.1;
                 break;
             case '.':
-                if(cam.ang>0)
-                cam.ang-=cam.ang_step*0.1;
-                break;    
+                if (cam.ang > 0)
+                    cam.ang -= cam.ang_step * 0.1;
+                break;
             default:
                 break;
             }
@@ -320,11 +319,14 @@ namespace AHXBXA
         Screen S;
         Camera cam;
         cam.pos = vec(0, 0, 1);
-        int ball_num = 5;
+        int ball_num = 7;
         Ball ball[ball_num];
         ball[0].pos = vec(0, -8, 4);
         ball[0].r = 5;
-        ball[0].light = 100;
+        ball[0].light = 300;
+        ball[5].pos = vec(-100, 0, 50);
+        ball[5].r = 50;
+        ball[5].light = 100;
         ball[4].pos = vec(0, 0, 10);
         ball[4].r = 2;
         ball[4].light = 1000;
@@ -337,17 +339,25 @@ namespace AHXBXA
         ball[2].pos = vec(8, 0, 0);
         ball[2].r = 1.5;
         ball[2].light = 300;
+        ball[6].pos = vec(8, 0, 0);
+        ball[6].r = 1.5;
+        ball[6].light = 300;
         double time = 0;
         while (1)
         {
             Move(cam);
             ball[1].pos = vec(8 * cos(time * 0.1), 8 * sin(time * 0.1), 0.5);
-            ball[2].pos = vec(8 * cos(time * 4), 0, 7 * sin(time * 4));
-            ball[4].pos = vec(8 * cos(time * 3), 7 * sin(time * 3), 10);
+            ball[1].light=300+100*sin(time*2);
+            ball[2].pos = vec(8 * cos(time * 1), 7 * sin(time * 2), 3);
+            ball[6].pos = vec(8, 7 , 3);
+            ball[6].light=400+200*sin(time*2);
+            ball[4].pos = vec(8 * cos(time * 2), 7 * sin(time * 2), 10);
+            ball[5].pos = vec(100 * cos(time*0.01), 70 * sin(time*0.05), 50 + 50 * cos(time*0.05) * sin(time * 0.05));
+            ball[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
             Get_pic(cam, S, ball, ball_num);
             S.print(cam);
             // cout << "\033c";
-            time += 0.01;
+            time += 0.005;
             ground_light = 1000 + 500 * sin(time * 2);
             Sleep(1);
         }
@@ -356,6 +366,6 @@ namespace AHXBXA
 }
 int main()
 {
-    AHXBXA::main();
+    SSR::main();
     return 0;
 }
