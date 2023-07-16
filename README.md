@@ -3,6 +3,6 @@
 # dont forget the star✨!
 
 # How to control?
-# WASDQE for move
-# ←↑↓→ for visual angle
-# <> for scale
+/WASDQE for move
+/←↑↓→ for visual angle
+/<> for scale
