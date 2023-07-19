@@ -1,8 +1,9 @@
-# ray_tracing
-# It's my first time to git
-# dont forget the **star**✨!
+# Ray_tracking
+> *It's my first time to git*
+
+#### dont forget to leave a **star**✨!
 
 ### How to **control**?
-### *WASDQE* for move
-### *←↑↓→* for visual angle
-### *<>* for scale
+#### *W A S D Q E* for move
+#### *← ↑ ↓ →* for visual angle
+#### *< >* for scale
