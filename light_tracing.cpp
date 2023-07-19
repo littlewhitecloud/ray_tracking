@@ -3,7 +3,7 @@
 #include <string.h>
 #include <cstring>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <windows.h>
 #include <string.h>
 #include <conio.h>
