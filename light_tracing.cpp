@@ -280,30 +280,32 @@ namespace SSR
             case 'e':
                 cam.pos = cam.pos - vec(0, 0, 1) * cam.step;
                 break;
-                // up
             case 72:
+                // 上方向键
                 if (cam.phi > cam.ang_step)
                     cam.phi -= cam.ang_step;
                 break;
-                // down
             case 80:
+                // 下方向键
                 if (cam.phi <= pi - cam.ang_step)
                     cam.phi += cam.ang_step;
                 break;
-                // right
             case 77:
+                // 右方向键
                 cam.theta -= cam.ang_step;
                 break;
-                // left
+                
             case 75:
+                // 左方向键
                 cam.theta += cam.ang_step;
                 break;
-                // 视角
             case ',':
+                // 视角 +
                 if (cam.ang < pi / 2 - eps)
                     cam.ang += cam.ang_step * 0.1;
                 break;
             case '.':
+                 // 视角 -
                 if (cam.ang > 0)
                     cam.ang -= cam.ang_step * 0.1;
                 break;
