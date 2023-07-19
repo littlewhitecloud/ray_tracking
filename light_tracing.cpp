@@ -10,9 +10,9 @@
 #include <stdlib.h>
 using namespace std;
 
-namespace SSR
+namespace Rain_Kotsuzui
 {
-    const double pi = acos(-1);
+    const double pi = M_PI;
     const double eps = 0.01;
     long ground_light = 1;
     struct vec
@@ -88,7 +88,7 @@ namespace SSR
         double f = 10;       // 焦距
         double m = f * tan(ang);
 
-        double sight = 500; // 视距
+        double sight = 200; // 视距
         double step = 0.1;
         double ang_step = pi / 45;
 
@@ -118,31 +118,31 @@ namespace SSR
     };
     struct Screen
     {
-        char pix[110][110];
-        const char color[9] = { '@', '%', '#', '*', '+', '=', '-', '.', ' ' };
+        char pix[210][210];
+        const char color[9] = {'@', '%', '#', '*', '+', '=', '-', '.', ' '};
         //                      100, 90,  80,  70   50   30   10   5   0
         void print(Camera cam)
         {
             HANDLE hOutput;
-            COORD coord = { 0, 0 };
+            COORD coord = {0, 0};
             hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
             CONSOLE_CURSOR_INFO cci;
             GetConsoleCursorInfo(hOutput, &cci);
             cci.bVisible = false;
             SetConsoleCursorInfo(hOutput, &cci);
             string A = "\n";
-            for (int j = 75; j >= 25; j--)
+            for (int j = 70; j >= 10; j--)
             {
-                for (int i = 10; i <= 95; i++)
+                for (int i = 0; i <= 117; i++)
                 {
                     A += pix[i][j];
                     A += ' ';
                 }
                 A += '\n';
             }
-            SetConsoleCursorPosition(hOutput, coord);
             printf("\n%s", A.c_str());
             printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang * 180 / pi);
+            SetConsoleCursorPosition(hOutput, coord);
         }
         void Color(double light, int i, int j)
         {
@@ -178,7 +178,7 @@ namespace SSR
     void Get_pic(Camera cam, Screen& S, Ball* ball, int ball_num)
     {
         //[i,j]
-        for (int i = -50; i <= 50; i++)
+        for (int i = -60; i <= 60; i++)
         {
             for (int j = -50; j <= 50; j++)
             {
@@ -189,7 +189,7 @@ namespace SSR
                 double light = 0;
                 int now_k = -1;
                 double tot_lamda = 0;
-                //
+            //
             again_:
                 double lamda = -1;
                 // ball
@@ -215,14 +215,14 @@ namespace SSR
                         tot_lamda += t;
                         if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
                             light += ground_light / cbrt(tot_lamda * tot_lamda);
-                        S.Color(light, i + 50, j + 50);
+                        S.Color(light, i + 60, j + 50);
                         continue;
                     }
                 }
 
                 // color
                 if (lamda < 0 || tot_lamda > cam.sight)
-                    S.Color(light, i + 50, j + 50);
+                    S.Color(light, i + 60, j + 50);
                 else
                 {
                     tot_lamda += lamda;
@@ -294,7 +294,6 @@ namespace SSR
                 // 右方向键
                 cam.theta -= cam.ang_step;
                 break;
-                
             case 75:
                 // 左方向键
                 cam.theta += cam.ang_step;
@@ -302,12 +301,12 @@ namespace SSR
             case ',':
                 // 视角 +
                 if (cam.ang < pi / 2 - eps)
-                    cam.ang += cam.ang_step * 0.1;
+                    cam.ang += cam.ang_step * 0.4;
                 break;
             case '.':
-                 // 视角 -
+                // 视角 -
                 if (cam.ang > 0)
-                    cam.ang -= cam.ang_step * 0.1;
+                    cam.ang -= cam.ang_step * 0.4;
                 break;
             default:
                 break;
@@ -357,7 +356,6 @@ namespace SSR
             ball[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
             Get_pic(cam, S, ball, ball_num);
             S.print(cam);
-            // cout << "\033c";
             time += 0.005;
             ground_light = 1000 + 500 * sin(time * 2);
             Sleep(1);
@@ -365,9 +363,8 @@ namespace SSR
         return;
     }
 }
-
 int main()
 {
-    SSR::main();
+    Rain_Kotsuzui::main();
     return 0;
 }
