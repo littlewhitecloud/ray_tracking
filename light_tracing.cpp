@@ -87,7 +87,7 @@ namespace Rain_Kotsuzui
         double f = 10;       // 焦距
         double m = f * tan(ang);
 
-        double sight = 500; // 视距
+        double sight = 200; // 视距
         double step = 0.1;
         double ang_step = pi / 45;
 
@@ -117,7 +117,7 @@ namespace Rain_Kotsuzui
     };
     struct Screen
     {
-        char pix[110][110] = {};
+        char pix[210][210] = {};
         const char color[9] = { '@', '%', '#', '*', '+', '=', '-', '.', ' ' };
         //                      100,  90,  80,  70,  50,  30,  10,  5,   0
         void print(Camera cam)
@@ -130,7 +130,7 @@ namespace Rain_Kotsuzui
             cci.bVisible = false;
             SetConsoleCursorInfo(hOutput, &cci);
             string A = "\n";
-            for (int j = 75; j >= 25; j--)
+            for (int j = 70; j >= 10; j--)
             {
                 for (int i = 10; i <= 95; i++)
                 {
@@ -182,7 +182,7 @@ namespace Rain_Kotsuzui
     inline double delta(double a, double b, double c) { return b * b - 4 * a * c; }
 
     // Todo: i and j is not good name. Use wide_pixel height_pixel instead.
-    void GetPixel(const Camera &cam, Screen& S, const std::vector<Ball> ball, int ball_num, int i, int j)
+    void GetPixel(const Camera& cam, Screen& S, const std::vector<Ball> ball, int ball_num, int i, int j)
     {
         vec n = cam.direct * cam.f + cam.e_x * (i * 0.01 * cam.m) + cam.e_y * (j * 0.01 * cam.m);
         vec p = cam.pos;
@@ -217,14 +217,14 @@ namespace Rain_Kotsuzui
                 tot_lamda += t;
                 if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
                     light += ground_light / cbrt(tot_lamda * tot_lamda);
-                S.Color(light, i + 50, j + 50);
+                S.Color(light, i + 60, j + 50);
                 return;
             }
         }
 
         // color
         if (lamda < 0 || tot_lamda > cam.sight)
-            S.Color(light, i + 50, j + 50);
+            S.Color(light, i + 60, j + 50);
         else
         {
             tot_lamda += lamda;
@@ -234,7 +234,7 @@ namespace Rain_Kotsuzui
             n = (p + (n * lamda) - ball[now_k].pos) * (2 * temp - 1) - (p - ball[now_k].pos);
             n = n.Unit();
             p = p + tem * lamda;
-            // first todo: remove goto
+            // First todo: remove goto(goto will cause lots of effert.)
             goto again_;
         }
         return;
@@ -311,11 +311,11 @@ namespace Rain_Kotsuzui
                 // 视角
             case ',':
                 if (camera.ang < pi / 2 - eps)
-                    camera.ang += camera.ang_step * 0.1;
+                    camera.ang += camera.ang_step * 0.4;
                 break;
             case '.':
                 if (camera.ang > 0)
-                    camera.ang -= camera.ang_step * 0.1;
+                    camera.ang -= camera.ang_step * 0.4;
                 break;
             default:
                 break;
