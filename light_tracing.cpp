@@ -132,7 +132,7 @@ namespace Rain_Kotsuzui
             string A = "\n";
             for (int j = 70; j >= 10; j--)
             {
-                for (int i = 10; i <= 95; i++)
+                for (int i = 0; i <= 117; i++)
                 {
                     // 理论上这里也可以多线程替换，但实际上性能瓶颈不在这里
                     A += pix[i][j];
