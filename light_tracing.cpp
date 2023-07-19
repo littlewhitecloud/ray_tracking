@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <cmath>
+#include <vector>
 #include <windows.h>
 #include <string.h>
 #include <conio.h>
@@ -12,9 +13,10 @@ using namespace std;
 
 namespace Rain_Kotsuzui
 {
-    const double pi = M_PI;
+    const double pi = acos(-1);
     const double eps = 0.01;
     long ground_light = 1;
+    // Todo: 类名大驼峰,实例名小驼峰
     struct vec
     {
         double eps_ = 0.01;
@@ -27,20 +29,17 @@ namespace Rain_Kotsuzui
         {
             return sqrt(x * x + y * y + z * z);
         }
-        vec Unit()
+        vec Unit() const
         {
             double l = sqrt(x * x + y * y + z * z);
             return vec(x, y, z) / l;
         }
-        vec operator==(const vec& A)
-        {
-            return (abs(x - A.x) <= eps_ && abs(y - A.y) <= eps_);
-        }
-        double operator*(const vec& A)
+
+        double operator*(const vec& A) const
         {
             return x * A.x + y * A.y + z * A.z;
         }
-        vec operator*(const double k)
+        vec operator*(const double k) const
         {
             vec res;
             res.x = this->x * k;
@@ -48,7 +47,7 @@ namespace Rain_Kotsuzui
             res.z = this->z * k;
             return res;
         }
-        vec operator/(const double k)
+        vec operator/(const double k) const
         {
             vec res;
             res.x = this->x / k;
@@ -56,7 +55,7 @@ namespace Rain_Kotsuzui
             res.z = this->z / k;
             return res;
         }
-        vec operator+(const vec& A)
+        vec operator+(const vec& A) const
         {
             vec res;
             res.x = this->x + A.x;
@@ -64,7 +63,7 @@ namespace Rain_Kotsuzui
             res.z = this->z + A.z;
             return res;
         }
-        vec operator-(const vec& A)
+        vec operator-(const vec& A) const
         {
             vec res;
             res.x = this->x - A.x;
@@ -73,7 +72,7 @@ namespace Rain_Kotsuzui
             return res;
         }
 
-        vec crs(vec A, vec B)
+        static vec crs(const vec &A, const vec &B)
         {
             vec res;
             res.x = A.y * B.z - A.z * B.y;
@@ -88,7 +87,7 @@ namespace Rain_Kotsuzui
         double f = 10;       // 焦距
         double m = f * tan(ang);
 
-        double sight = 200; // 视距
+        double sight = 500; // 视距
         double step = 0.1;
         double ang_step = pi / 45;
 
@@ -118,32 +117,34 @@ namespace Rain_Kotsuzui
     };
     struct Screen
     {
-        char pix[210][210];
-        const char color[9] = {'@', '%', '#', '*', '+', '=', '-', '.', ' '};
-        //                      100, 90,  80,  70   50   30   10   5   0
+        char pix[110][110] = {};
+        const char color[9] = { '@', '%', '#', '*', '+', '=', '-', '.', ' ' };
+        //                      100,  90,  80,  70,  50,  30,  10,  5,   0
         void print(Camera cam)
         {
             HANDLE hOutput;
-            COORD coord = {0, 0};
+            COORD coord = { 0, 0 };
             hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
             CONSOLE_CURSOR_INFO cci;
             GetConsoleCursorInfo(hOutput, &cci);
             cci.bVisible = false;
             SetConsoleCursorInfo(hOutput, &cci);
             string A = "\n";
-            for (int j = 70; j >= 10; j--)
+            for (int j = 75; j >= 25; j--)
             {
-                for (int i = 0; i <= 117; i++)
+                for (int i = 10; i <= 95; i++)
                 {
+                    // 理论上这里也可以多线程替换，但实际上性能瓶颈不在这里
                     A += pix[i][j];
                     A += ' ';
                 }
                 A += '\n';
             }
+            SetConsoleCursorPosition(hOutput, coord);
             printf("\n%s", A.c_str());
             printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang * 180 / pi);
-            SetConsoleCursorPosition(hOutput, coord);
         }
+
         void Color(double light, int i, int j)
         {
             if (light >= 330)
@@ -167,82 +168,91 @@ namespace Rain_Kotsuzui
             return;
         }
     };
+
     struct Ball
     {
+        Ball() {};
+        Ball(vec pos, double r, double light)
+            : pos(pos), r(r), light(light) {};
         vec pos = vec(0, 0, 0);
         double r = 0;
         double light = 100;
     };
     // ax^2+bx+c=0
-    double delta(double a, double b, double c) { return b * b - 4 * a * c; }
-    void Get_pic(Camera cam, Screen& S, Ball* ball, int ball_num)
-    {
-        //[i,j]
-        for (int i = -60; i <= 60; i++)
-        {
-            for (int j = -50; j <= 50; j++)
-            {
-                vec n = cam.direct * cam.f + cam.e_x * (i * 0.01 * cam.m) + cam.e_y * (j * 0.01 * cam.m);
-                vec p = cam.pos;
-                n = n.Unit();
-                //
-                double light = 0;
-                int now_k = -1;
-                double tot_lamda = 0;
-            //
-            again_:
-                double lamda = -1;
-                // ball
-                for (int k = 0; k < ball_num; k++)
-                {
-                    vec o = ball[k].pos;
-                    double r = ball[k].r;
-                    double del = delta(1, (n * (p - o)) * 2, (p - o) * (p - o) - r * r);
-                    if (k == now_k || del < 0)
-                        continue;
-                    if ((n * (o - p) - sqrt(del) / 2 > 0) && (lamda < 0 || lamda > n * (o - p) - sqrt(del) / 2))
-                    {
-                        now_k = k, lamda = n * (o - p) - sqrt(del) / 2;
-                    }
-                }
-                // ground
-                if (n.z < 0)
-                {
-                    double t = abs(p.z / n.z);
-                    vec o = p + n * t;
-                    if (lamda < 0 || lamda > t)
-                    {
-                        tot_lamda += t;
-                        if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
-                            light += ground_light / cbrt(tot_lamda * tot_lamda);
-                        S.Color(light, i + 60, j + 50);
-                        continue;
-                    }
-                }
+    inline double delta(double a, double b, double c) { return b * b - 4 * a * c; }
 
-                // color
-                if (lamda < 0 || tot_lamda > cam.sight)
-                    S.Color(light, i + 60, j + 50);
-                else
-                {
-                    tot_lamda += lamda;
-                    light += ball[now_k].light / (sqrt(tot_lamda));
-                    double temp = (p + (n * lamda) - ball[now_k].pos) * (p - ball[now_k].pos) / (ball[now_k].r * ball[now_k].r);
-                    vec tem = n;
-                    n = (p + (n * lamda) - ball[now_k].pos) * (2 * temp - 1) - (p - ball[now_k].pos);
-                    n = n.Unit();
-                    p = p + tem * lamda;
-                    goto again_;
-                }
+    // Todo: i and j is not good name. Use wide_pixel height_pixel instead.
+    void GetPixel(const Camera &cam, Screen& S, const std::vector<Ball> ball, int ball_num, int i, int j)
+    {
+        vec n = cam.direct * cam.f + cam.e_x * (i * 0.01 * cam.m) + cam.e_y * (j * 0.01 * cam.m);
+        vec p = cam.pos;
+        n = n.Unit();
+        //
+        double light = 0;
+        int now_k = -1;
+        double tot_lamda = 0;
+        //
+    again_:
+        double lamda = -1;
+        // ball
+        for (int k = 0; k < ball_num; k++)
+        {
+            vec o = ball[k].pos;
+            double r = ball[k].r;
+            double del = delta(1, (n * (p - o)) * 2, (p - o) * (p - o) - r * r);
+            if (k == now_k || del < 0)
+                continue;
+            if ((n * (o - p) - sqrt(del) / 2 > 0) && (lamda < 0 || lamda > n * (o - p) - sqrt(del) / 2))
+            {
+                now_k = k, lamda = n * (o - p) - sqrt(del) / 2;
             }
         }
+        // ground
+        if (n.z < 0)
+        {
+            double t = abs(p.z / n.z);
+            vec o = p + n * t;
+            if (lamda < 0 || lamda > t)
+            {
+                tot_lamda += t;
+                if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
+                    light += ground_light / cbrt(tot_lamda * tot_lamda);
+                S.Color(light, i + 50, j + 50);
+                return;
+            }
+        }
+
+        // color
+        if (lamda < 0 || tot_lamda > cam.sight)
+            S.Color(light, i + 50, j + 50);
+        else
+        {
+            tot_lamda += lamda;
+            light += ball[now_k].light / (sqrt(tot_lamda));
+            double temp = (p + (n * lamda) - ball[now_k].pos) * (p - ball[now_k].pos) / (ball[now_k].r * ball[now_k].r);
+            vec tem = n;
+            n = (p + (n * lamda) - ball[now_k].pos) * (2 * temp - 1) - (p - ball[now_k].pos);
+            n = n.Unit();
+            p = p + tem * lamda;
+            // first todo: remove goto
+            goto again_;
+        }
+        return;
     }
 
-    void Move(Camera& cam)
+    void GetPicture(const Camera &camera, Screen& screen, const std::vector<Ball> &ball, int ball_num)
+    {
+        //[i,j]
+        // 优化瓶颈，可以用多线程或GPU解决
+        for (int i = -50; i <= 50; i++)
+            for (int j = -50; j <= 50; j++)
+                GetPixel(camera, screen, ball, ball_num, i, j);
+    }
+
+    void Move(Camera& camera)
     {
         char key;
-        cam.set();
-        //
+        camera.set();
         if (_kbhit())
         {
             fflush(stdin);
@@ -251,62 +261,61 @@ namespace Rain_Kotsuzui
             switch (key)
             {
             case 'w':
-                direct = cam.direct;
+                direct = camera.direct;
                 direct.z = 0;
                 direct = direct.Unit();
-                cam.pos = cam.pos + direct * cam.step;
+                camera.pos = camera.pos + direct * camera.step;
                 break;
             case 's':
-                direct = cam.direct;
+                direct = camera.direct;
                 direct.z = 0;
                 direct = direct.Unit();
-                cam.pos = cam.pos - direct * cam.step;
+                camera.pos = camera.pos - direct * camera.step;
                 break;
             case 'a':
-                direct = cam.e_x;
+                direct = camera.e_x;
                 direct.z = 0;
                 direct = direct.Unit();
-                cam.pos = cam.pos - direct * cam.step;
+                camera.pos = camera.pos - direct * camera.step;
                 break;
             case 'd':
-                direct = cam.e_x;
+                direct = camera.e_x;
                 direct.z = 0;
                 direct = direct.Unit();
-                cam.pos = cam.pos + direct * cam.step;
+                camera.pos = camera.pos + direct * camera.step;
                 break;
             case 'q':
-                cam.pos = cam.pos + vec(0, 0, 1) * cam.step;
+                camera.pos = camera.pos + vec(0, 0, 1) * camera.step;
                 break;
             case 'e':
-                cam.pos = cam.pos - vec(0, 0, 1) * cam.step;
+                camera.pos = camera.pos - vec(0, 0, 1) * camera.step;
                 break;
+                // up
             case 72:
-                // 上方向键
-                if (cam.phi > cam.ang_step)
-                    cam.phi -= cam.ang_step;
+                if (camera.phi > camera.ang_step)
+                    camera.phi -= camera.ang_step;
                 break;
+                // down
             case 80:
-                // 下方向键
-                if (cam.phi <= pi - cam.ang_step)
-                    cam.phi += cam.ang_step;
+                if (camera.phi <= pi - camera.ang_step)
+                    camera.phi += camera.ang_step;
                 break;
+                // right
             case 77:
-                // 右方向键
-                cam.theta -= cam.ang_step;
+                camera.theta -= camera.ang_step;
                 break;
+                // left
             case 75:
-                // 左方向键
-                cam.theta += cam.ang_step;
+                camera.theta += camera.ang_step;
                 break;
+                // 视角
             case ',':
-                // 视角 +
-                if (cam.ang < pi / 2 - eps)
-                    cam.ang += cam.ang_step * 0.4;
+                if (camera.ang < pi / 2 - eps)
+                    camera.ang += camera.ang_step * 0.1;
                 break;
             case '.':
-                // 视角 -
-                if (cam.ang > 0)
-                    cam.ang -= cam.ang_step * 0.4;
+                if (camera.ang > 0)
+                    camera.ang -= camera.ang_step * 0.1;
                 break;
             default:
                 break;
@@ -314,50 +323,46 @@ namespace Rain_Kotsuzui
         }
     }
 
+    void BallMove(std::vector<Ball> balls, double time)
+    {
+        balls[1].pos = vec(8 * cos(time * 0.1), 8 * sin(time * 0.1), 0.5);
+        balls[1].light = 300 + 100 * sin(time * 2);
+        balls[2].pos = vec(8 * cos(time * 1), 7 * sin(time * 2), 3);
+        balls[6].pos = vec(8, 7, 3);
+        balls[6].light = 400 + 200 * sin(time * 2);
+        balls[4].pos = vec(8 * cos(time * 2), 7 * sin(time * 2), 10);
+        balls[5].pos = vec(100 * cos(time * 0.01), 70 * sin(time * 0.05), 50 + 50 * cos(time * 0.05) * sin(time * 0.05));
+        balls[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
+    }
+
     void main()
     {
         Screen S;
         Camera cam;
         cam.pos = vec(0, 0, 1);
-        constexpr int ball_num = 7;
-        Ball ball[ball_num];
-        ball[0].pos = vec(0, -8, 4);
-        ball[0].r = 5;
-        ball[0].light = 300;
-        ball[5].pos = vec(-100, 0, 50);
-        ball[5].r = 50;
-        ball[5].light = 100;
-        ball[4].pos = vec(0, 0, 10);
-        ball[4].r = 2;
-        ball[4].light = 1000;
-        ball[3].pos = vec(0, 2, 4);
-        ball[3].r = 5;
-        ball[3].light = 100;
-        ball[1].pos = vec(8, 0, 0);
-        ball[1].r = 1;
-        ball[1].light = 2000;
-        ball[2].pos = vec(8, 0, 0);
-        ball[2].r = 1.5;
-        ball[2].light = 300;
-        ball[6].pos = vec(8, 0, 0);
-        ball[6].r = 1.5;
-        ball[6].light = 300;
-        double time = 0;
+
+        std::vector<Ball> balls = {
+            // pos, radius, light
+            Ball(vec(0, -8, 4), 5, 300),
+            Ball(vec(8, 0, 0), 1, 2000),
+            Ball(vec(8, 0, 0), 1.5, 300),
+            Ball(vec(0, 2, 4), 5, 100),
+            Ball(vec(0, 0, 10), 2, 1000),
+            Ball(vec(-100, 0, 50), 50, 100),
+            Ball(vec(8, 0, 0), 1.5, 300)
+        };
+        const int ball_num = static_cast<int>(balls.size());
+        double time = 0; // Todo: it is not a good name, and will error if run days.
         while (1)
         {
             Move(cam);
-            ball[1].pos = vec(8 * cos(time * 0.1), 8 * sin(time * 0.1), 0.5);
-            ball[1].light = 300 + 100 * sin(time * 2);
-            ball[2].pos = vec(8 * cos(time * 1), 7 * sin(time * 2), 3);
-            ball[6].pos = vec(8, 7, 3);
-            ball[6].light = 400 + 200 * sin(time * 2);
-            ball[4].pos = vec(8 * cos(time * 2), 7 * sin(time * 2), 10);
-            ball[5].pos = vec(100 * cos(time * 0.01), 70 * sin(time * 0.05), 50 + 50 * cos(time * 0.05) * sin(time * 0.05));
-            ball[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
-            Get_pic(cam, S, ball, ball_num);
+            BallMove(balls, time);
+            GetPicture(cam, S, balls, ball_num);
             S.print(cam);
+            // cout << "\033c";
             time += 0.005;
-            ground_light = 1000 + 500 * sin(time * 2);
+            ground_light = 1000 + static_cast<long>(500 * sin(time * 2));
+            // Todo: 主线程（渲染线程）整体1秒，而不是主操作完后等一秒。这样渲染效果更佳
             Sleep(1);
         }
         return;
