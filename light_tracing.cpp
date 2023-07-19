@@ -32,11 +32,11 @@ namespace SSR
             double l = sqrt(x * x + y * y + z * z);
             return vec(x, y, z) / l;
         }
-        vec operator==(const vec &A)
+        vec operator==(const vec& A)
         {
             return (abs(x - A.x) <= eps_ && abs(y - A.y) <= eps_);
         }
-        double operator*(const vec &A)
+        double operator*(const vec& A)
         {
             return x * A.x + y * A.y + z * A.z;
         }
@@ -56,7 +56,7 @@ namespace SSR
             res.z = this->z / k;
             return res;
         }
-        vec operator+(const vec &A)
+        vec operator+(const vec& A)
         {
             vec res;
             res.x = this->x + A.x;
@@ -64,7 +64,7 @@ namespace SSR
             res.z = this->z + A.z;
             return res;
         }
-        vec operator-(const vec &A)
+        vec operator-(const vec& A)
         {
             vec res;
             res.x = this->x - A.x;
@@ -108,7 +108,7 @@ namespace SSR
             if (theta < 0)
                 theta += 2 * pi;
             m = f * tan(ang);
-            ang_step=(pi/45)*(ang/(pi/3));
+            ang_step = (pi / 45) * (ang / (pi / 3));
             direct = vec(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi));
             e_x = vec(direct.y, -direct.x, 0);
             e_y = vec(-direct.x * direct.z, -direct.y * direct.z, 1 - direct.z * direct.z);
@@ -119,12 +119,12 @@ namespace SSR
     struct Screen
     {
         char pix[110][110];
-        const char color[9] = {'@', '%', '#', '*', '+', '=', '-', '.', ' '};
+        const char color[9] = { '@', '%', '#', '*', '+', '=', '-', '.', ' ' };
         //                      100, 90,  80,  70   50   30   10   5   0
         void print(Camera cam)
         {
             HANDLE hOutput;
-            COORD coord = {0, 0};
+            COORD coord = { 0, 0 };
             hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
             CONSOLE_CURSOR_INFO cci;
             GetConsoleCursorInfo(hOutput, &cci);
@@ -142,7 +142,7 @@ namespace SSR
             }
             SetConsoleCursorPosition(hOutput, coord);
             printf("\n%s", A.c_str());
-            printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang*180/pi);
+            printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang * 180 / pi);
         }
         void Color(double light, int i, int j)
         {
@@ -175,8 +175,7 @@ namespace SSR
     };
     // ax^2+bx+c=0
     double delta(double a, double b, double c) { return b * b - 4 * a * c; }
-    double min(double a, double b) { return a > b ? b : a; }
-    void Get_pic(Camera cam, Screen &S, Ball *ball, int ball_num)
+    void Get_pic(Camera cam, Screen& S, Ball* ball, int ball_num)
     {
         //[i,j]
         for (int i = -50; i <= 50; i++)
@@ -190,7 +189,7 @@ namespace SSR
                 double light = 0;
                 int now_k = -1;
                 double tot_lamda = 0;
-            //
+                //
             again_:
                 double lamda = -1;
                 // ball
@@ -239,15 +238,15 @@ namespace SSR
         }
     }
 
-    void Move(Camera &cam)
+    void Move(Camera& cam)
     {
         char key;
         cam.set();
         //
-        if (kbhit())
+        if (_kbhit())
         {
             fflush(stdin);
-            key = getch();
+            key = _getch();
             vec direct;
             switch (key)
             {
@@ -281,30 +280,32 @@ namespace SSR
             case 'e':
                 cam.pos = cam.pos - vec(0, 0, 1) * cam.step;
                 break;
-            // up
             case 72:
+                // 上方向键
                 if (cam.phi > cam.ang_step)
                     cam.phi -= cam.ang_step;
                 break;
-            // down
             case 80:
+                // 下方向键
                 if (cam.phi <= pi - cam.ang_step)
                     cam.phi += cam.ang_step;
                 break;
-            // right
             case 77:
+                // 右方向键
                 cam.theta -= cam.ang_step;
                 break;
-            // left
+                
             case 75:
+                // 左方向键
                 cam.theta += cam.ang_step;
                 break;
-            // 视角
             case ',':
+                // 视角 +
                 if (cam.ang < pi / 2 - eps)
                     cam.ang += cam.ang_step * 0.1;
                 break;
             case '.':
+                 // 视角 -
                 if (cam.ang > 0)
                     cam.ang -= cam.ang_step * 0.1;
                 break;
@@ -319,7 +320,7 @@ namespace SSR
         Screen S;
         Camera cam;
         cam.pos = vec(0, 0, 1);
-        int ball_num = 7;
+        constexpr int ball_num = 7;
         Ball ball[ball_num];
         ball[0].pos = vec(0, -8, 4);
         ball[0].r = 5;
@@ -347,12 +348,12 @@ namespace SSR
         {
             Move(cam);
             ball[1].pos = vec(8 * cos(time * 0.1), 8 * sin(time * 0.1), 0.5);
-            ball[1].light=300+100*sin(time*2);
+            ball[1].light = 300 + 100 * sin(time * 2);
             ball[2].pos = vec(8 * cos(time * 1), 7 * sin(time * 2), 3);
-            ball[6].pos = vec(8, 7 , 3);
-            ball[6].light=400+200*sin(time*2);
+            ball[6].pos = vec(8, 7, 3);
+            ball[6].light = 400 + 200 * sin(time * 2);
             ball[4].pos = vec(8 * cos(time * 2), 7 * sin(time * 2), 10);
-            ball[5].pos = vec(100 * cos(time*0.01), 70 * sin(time*0.05), 50 + 50 * cos(time*0.05) * sin(time * 0.05));
+            ball[5].pos = vec(100 * cos(time * 0.01), 70 * sin(time * 0.05), 50 + 50 * cos(time * 0.05) * sin(time * 0.05));
             ball[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
             Get_pic(cam, S, ball, ball_num);
             S.print(cam);
@@ -364,6 +365,7 @@ namespace SSR
         return;
     }
 }
+
 int main()
 {
     SSR::main();
