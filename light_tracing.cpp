@@ -140,11 +140,10 @@ namespace Rain_Kotsuzui
                 }
                 A += '\n';
             }
-            SetConsoleCursorPosition(hOutput, coord);
             printf("\n%s", A.c_str());
             printf("now pos:%.2f %.2f %.2f ang:%.2f\n", cam.pos.x, cam.pos.y, cam.pos.z, cam.ang * 180 / pi);
+            SetConsoleCursorPosition(hOutput, coord);
         }
-
         void Color(double light, int i, int j)
         {
             if (light >= 330)
@@ -180,11 +179,9 @@ namespace Rain_Kotsuzui
     };
     // ax^2+bx+c=0
     inline double delta(double a, double b, double c) { return b * b - 4 * a * c; }
-
-    // Todo: i and j is not good name. Use wide_pixel height_pixel instead.
-    void GetPixel(const Camera& cam, Screen& S, const std::vector<Ball> ball, int ball_num, int i, int j)
+    void GetPixel(const Camera& cam, Screen& S, const std::vector<Ball> ball, int ball_num, int x, int y)
     {
-        vec n = cam.direct * cam.f + cam.e_x * (i * 0.01 * cam.m) + cam.e_y * (j * 0.01 * cam.m);
+        vec n = cam.direct * cam.f + cam.e_x * (x * 0.01 * cam.m) + cam.e_y * (y * 0.01 * cam.m);
         vec p = cam.pos;
         n = n.Unit();
         //
@@ -217,14 +214,14 @@ namespace Rain_Kotsuzui
                 tot_lamda += t;
                 if ((((int)o.x / 1) % 2) ^ (((int)o.y / 1) % 2))
                     light += ground_light / cbrt(tot_lamda * tot_lamda);
-                S.Color(light, i + 60, j + 50);
+                S.Color(light, x + 60, y + 50);
                 return;
             }
         }
 
         // color
         if (lamda < 0 || tot_lamda > cam.sight)
-            S.Color(light, i + 60, j + 50);
+            S.Color(light, x + 60, y + 50);
         else
         {
             tot_lamda += lamda;
@@ -244,7 +241,7 @@ namespace Rain_Kotsuzui
     {
         //[i,j]
         // 优化瓶颈，可以用多线程或GPU解决
-        for (int i = -50; i <= 50; i++)
+        for (int i = -60; i <= 60; i++)
             for (int j = -50; j <= 50; j++)
                 GetPixel(camera, screen, ball, ball_num, i, j);
     }
@@ -323,16 +320,16 @@ namespace Rain_Kotsuzui
         }
     }
 
-    void BallMove(std::vector<Ball> balls, double time)
+    void BallMove(std::vector<Ball> &balls, double T)
     {
-        balls[1].pos = vec(8 * cos(time * 0.1), 8 * sin(time * 0.1), 0.5);
-        balls[1].light = 300 + 100 * sin(time * 2);
-        balls[2].pos = vec(8 * cos(time * 1), 7 * sin(time * 2), 3);
+        balls[1].pos = vec(8 * cos(T * 0.1), 8 * sin(T * 0.1), 0.5);
+        balls[1].light = 300 + 100 * sin(T * 2);
+        balls[2].pos = vec(8 * cos(T* 1), 7 * sin(T * 2), 3);
         balls[6].pos = vec(8, 7, 3);
-        balls[6].light = 400 + 200 * sin(time * 2);
-        balls[4].pos = vec(8 * cos(time * 2), 7 * sin(time * 2), 10);
-        balls[5].pos = vec(100 * cos(time * 0.01), 70 * sin(time * 0.05), 50 + 50 * cos(time * 0.05) * sin(time * 0.05));
-        balls[0].pos = vec(0, -8 + 0.1 * cos(time * pi), 4 + 3 * sin(time * 0.1));
+        balls[6].light = 400 + 200 * sin(T * 2);
+        balls[4].pos = vec(8 * cos(T * 2), 7 * sin(T * 2), 10);
+        balls[5].pos = vec(100 * cos(T * 0.01), 70 * sin(T * 0.05), 50 + 50 * cos(T * 0.05) * sin(T * 0.05));
+        balls[0].pos = vec(0, -8 + 0.1 * cos(T * pi), 4 + 3 * sin(T * 0.1));
     }
 
     void main()
@@ -352,16 +349,16 @@ namespace Rain_Kotsuzui
             Ball(vec(8, 0, 0), 1.5, 300)
         };
         const int ball_num = static_cast<int>(balls.size());
-        double time = 0; // Todo: it is not a good name, and will error if run days.
+        double T = 0;
         while (1)
         {
             Move(cam);
-            BallMove(balls, time);
+            BallMove(balls, T);
             GetPicture(cam, S, balls, ball_num);
             S.print(cam);
             // cout << "\033c";
-            time += 0.005;
-            ground_light = 1000 + static_cast<long>(500 * sin(time * 2));
+            T += 0.01;
+            ground_light = 1000 + static_cast<long>(500 * sin(T * 2));
             // Todo: 主线程（渲染线程）整体1秒，而不是主操作完后等一秒。这样渲染效果更佳
             Sleep(1);
         }
